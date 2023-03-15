@@ -1,18 +1,13 @@
 from telegram.ext import Updater, Filters, MessageHandler, CommandHandler
 
-from telegram import ReplyKeyboardMarkup
-from requests.auth import HTTPBasicAuth
+random_data_fields = {
+    'random_movie_name': 'name',
+    'random_movie_rating': 'rating',
+    'random_movie_description': 'description',
+    'random_movie_poster': 'poster',
+}
 
-import requests
-
-KP_TOKEN = '66XDW7D-CT0MF9Z-GZB7XYF-65WAXFN'
-KP_KEY = 'X-API-KEY'
-URL_RANDOM = 'https://api.kinopoisk.dev/v1/movie/random'
-HEADERS = {'Authorization': f'ApiKey {KP_KEY, KP_TOKEN}'}
-auth = HTTPBasicAuth(KP_KEY, KP_TOKEN)
-updater = Updater(token='5902172202:AAHewEIuOCNWpnyfWyVkiY1o7i8RlJrXFKU')
-
-
-response = requests.get(URL_RANDOM, headers=HEADERS).json()
-# random_movie = response[0].get('name')
-print(response)
+for data, value in random_data_fields.items():
+    new_data = data
+    new_value = value
+    print(f'{new_data}: {new_value}')
