@@ -11,7 +11,8 @@ HEADERS = {KP_KEY: KP_TOKEN}
 updater = Updater(token='5902172202:AAHewEIuOCNWpnyfWyVkiY1o7i8RlJrXFKU')
 
 
-def get_new_random():
+def get_response_random():
+    """Получение словаря данных о фильме."""
     response = requests.get(URL_RANDOM, headers=HEADERS).json()
     random_data_fields = {
         'random_movie_name': response.get('name'),
@@ -26,61 +27,44 @@ def get_new_random():
     return random_data_fields
 
 
-def new_random(update, context):
+def get_data_random(update, context):
+    """Отправка отформатированного сообщения."""
     chat = update.effective_chat
     random_data = {}
+    for key, value in get_response_random().items():
+        if value == None:
+            random_data[key] = '-'
+        random_data[key] = value
+    if random_data['random_movie_type'] == 'tv-series':
+        type_url = 'series'
+    else:
+        type_url = 'film'
+    text_message = (
+        f'*{random_data["random_movie_name"]}*. '\
+        f'Рейтинг: {random_data["random_movie_rating"]}. '\
+        f'Страна: {random_data["random_movie_country"]}. '\
+        f'Год: {random_data["random_movie_year"]}. \n'\
+        '---- \n'\
+        f'Описание: {random_data["random_movie_description"]} \n'\
+        f'https://kinopoisk.ru/{type_url}/{random_data["random_movie_url"]}/'
+    )
+    image_message = random_data['random_movie_poster']
+    
+    context.bot.send_photo(chat.id, image_message)
+    context.bot.send_message(
+        chat.id, text_message, parse_mode=ParseMode.MARKDOWN
+    )
 
+
+def new_random(update, context):
+    """Обработка команды /random."""
+    chat = update.effective_chat
+    
     # первый рандомный фильм
-    for key, value in get_new_random().items():
-        if value == None:
-            random_data[key] = '-'
-        random_data[key] = value
-    if random_data['random_movie_type'] == 'tv-series':
-        type_url = 'series'
-    else:
-        type_url = 'film'
-    text_message = (
-        f'*{random_data["random_movie_name"]}*. '\
-        f'Рейтинг: {random_data["random_movie_rating"]}. '\
-        f'Страна: {random_data["random_movie_country"]}. '\
-        f'Год: {random_data["random_movie_year"]}. \n'\
-        '---- \n'\
-        f'Описание: {random_data["random_movie_description"]} \n'\
-        f'https://kinopoisk.ru/{type_url}/{random_data["random_movie_url"]}/'
-    )
-    image_message = random_data['random_movie_poster']
-    
-    context.bot.send_photo(chat.id, image_message)
-    context.bot.send_message(
-        chat.id, text_message, parse_mode=ParseMode.MARKDOWN
-    )
-
+    get_data_random(update, context)
     context.bot.send_message(chat.id, 'Либо посмотри вот это:')
-
     # второй рандомный фильм
-    for key, value in get_new_random().items():
-        if value == None:
-            random_data[key] = '-'
-        random_data[key] = value
-    if random_data['random_movie_type'] == 'tv-series':
-        type_url = 'series'
-    else:
-        type_url = 'film'
-    text_message = (
-        f'*{random_data["random_movie_name"]}*. '\
-        f'Рейтинг: {random_data["random_movie_rating"]}. '\
-        f'Страна: {random_data["random_movie_country"]}. '\
-        f'Год: {random_data["random_movie_year"]}. \n'\
-        '---- \n'\
-        f'Описание: {random_data["random_movie_description"]} \n'\
-        f'https://kinopoisk.ru/{type_url}/{random_data["random_movie_url"]}/'
-    )
-    image_message = random_data['random_movie_poster']
-    
-    context.bot.send_photo(chat.id, image_message)
-    context.bot.send_message(
-        chat.id, text_message, parse_mode=ParseMode.MARKDOWN
-    )
+    get_data_random(update, context)
 
 
 def wake_up(update, context):
@@ -107,8 +91,35 @@ def wake_up(update, context):
     )
 
 
+def wisechoice(update, context):
+    chat = update.effective_chat
+    text_message = '_Функция пока в разработке_'
+    context.bot.send_message(
+        chat.id, text_message, parse_mode=ParseMode.MARKDOWN
+    )
+
+
+def add_movie(update, context):
+    chat = update.effective_chat
+    text_message = '_Функция пока в разработке_'
+    context.bot.send_message(
+        chat.id, text_message, parse_mode=ParseMode.MARKDOWN
+    )
+
+
+def del_movie(update, context):
+    chat = update.effective_chat
+    text_message = '_Функция пока в разработке_'
+    context.bot.send_message(
+        chat.id, text_message, parse_mode=ParseMode.MARKDOWN
+    )
+
+
 updater.dispatcher.add_handler(CommandHandler('start', wake_up))
 updater.dispatcher.add_handler(CommandHandler('random', new_random))
+updater.dispatcher.add_handler(CommandHandler('wisechoice', wisechoice))
+updater.dispatcher.add_handler(CommandHandler('add', add_movie))
+updater.dispatcher.add_handler(CommandHandler('del', del_movie))
 
 updater.start_polling()
 updater.idle()
