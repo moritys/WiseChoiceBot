@@ -3,12 +3,18 @@ from telegram.ext import Updater, Filters, MessageHandler, CommandHandler
 from telegram import ReplyKeyboardMarkup, ParseMode
 
 import requests
+import os
 
-KP_TOKEN = '66XDW7D-CT0MF9Z-GZB7XYF-65WAXFN'
-KP_KEY = 'X-API-KEY'
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+KP_TOKEN = os.getenv('KP_TOKEN')
+KP_KEY = os.getenv('KP_KEY')
 URL_RANDOM = 'https://api.kinopoisk.dev/v1/movie/random'
 HEADERS = {KP_KEY: KP_TOKEN}
-updater = Updater(token='5902172202:AAHewEIuOCNWpnyfWyVkiY1o7i8RlJrXFKU')
+updater = Updater(token=os.getenv('TG_TOKEN'))
 
 
 def get_response_random():
@@ -19,11 +25,13 @@ def get_response_random():
         'random_movie_rating': response.get('rating').get('kp'),
         'random_movie_year': response.get('year'),
         'random_movie_country': response.get('countries')[0].get('name'),
+        'random_movie_genre': response.get('genres')[0].get('name'),
         'random_movie_description': response.get('description'),
         'random_movie_poster': response.get('poster').get('url'),
         'random_movie_url': response.get('id'),
         'random_movie_type': response.get('type')
     }
+    print('сделан запрос к кп')
     return random_data_fields
 
 
@@ -31,26 +39,34 @@ def get_data_random(update, context):
     """Отправка отформатированного сообщения."""
     chat = update.effective_chat
     random_data = {}
+
     for key, value in get_response_random().items():
         if value == None:
             random_data[key] = '-'
         random_data[key] = value
+
     if random_data['random_movie_type'] == 'tv-series':
         type_url = 'series'
     else:
         type_url = 'film'
-    text_message = (
-        f'*{random_data["random_movie_name"]}*. '\
-        f'Рейтинг: {random_data["random_movie_rating"]}. '\
-        f'Страна: {random_data["random_movie_country"]}. '\
-        f'Год: {random_data["random_movie_year"]}. \n'\
-        '---- \n'\
-        f'Описание: {random_data["random_movie_description"]} \n'\
-        f'https://kinopoisk.ru/{type_url}/{random_data["random_movie_url"]}/'
-    )
-    image_message = random_data['random_movie_poster']
-    
-    context.bot.send_photo(chat.id, image_message)
+
+    if random_data["random_movie_country"] == 'Россия':
+        text_message = 'Здесь был Российский фильм, его я предлагать не буду.'
+        image_message = 'static/notrussian.png'
+        context.bot.send_photo(chat.id, photo=open(image_message, 'rb'))
+    else:
+        text_message = (
+            f'*{random_data["random_movie_name"]}*. '\
+            f'Жанр: {random_data["random_movie_genre"]}. '\
+            f'Рейтинг: {random_data["random_movie_rating"]}. '\
+            f'Страна: {random_data["random_movie_country"]}. '\
+            f'Год: {random_data["random_movie_year"]}. \n'\
+            '---- \n'\
+            f'Описание: {random_data["random_movie_description"]} \n'\
+            f'https://kinopoisk.ru/{type_url}/{random_data["random_movie_url"]}/'
+        )
+        image_message = random_data['random_movie_poster']
+        context.bot.send_photo(chat.id, image_message)
     context.bot.send_message(
         chat.id, text_message, parse_mode=ParseMode.MARKDOWN
     )
