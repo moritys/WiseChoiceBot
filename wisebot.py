@@ -18,7 +18,7 @@ updater = Updater(token=os.getenv('TG_TOKEN'))
 
 
 def get_response_random():
-    """Получение словаря данных о фильме."""
+    """Получение словаря данных о рандомном фильме."""
     response = requests.get(URL_RANDOM, headers=HEADERS).json()
     random_data_fields = {
         'random_movie_name': response.get('name'),
@@ -36,7 +36,7 @@ def get_response_random():
 
 
 def get_data_random(update, context):
-    """Отправка отформатированного сообщения."""
+    """Отправка отформатированного сообщения /random."""
     chat = update.effective_chat
     random_data = {}
 
@@ -88,10 +88,10 @@ def wake_up(update, context):
     name = update.message.chat.first_name
     text = (
         'Для работы со мной используй меню или команды: \n'
-        'random - получить два случайных фильма из КП \n'
-        'wisechoice - выбрать случайный фильм из своего списка \n'
-        'add - добавить фильм в коллекцию (ссылка должна быть с КП) \n'
-        'del - удалить фильм из коллекции (ссылка должна быть с КП) \n'
+        '`/random` - получить два случайных фильма из КП \n'
+        '`/wisechoice` - выбрать случайный фильм из своего списка \n'
+        '`/add` - добавить фильм в коллекцию (ссылка должна быть с КП) \n'
+        '`/del` - удалить фильм из коллекции (ссылка должна быть с КП) \n'
     )
     button = ReplyKeyboardMarkup([
         ['/random', '/wisechoice'],
@@ -103,7 +103,8 @@ def wake_up(update, context):
     context.bot.send_message(
         chat_id=chat.id,
         text=text,
-        reply_markup=button
+        reply_markup=button,
+        parse_mode=ParseMode.MARKDOWN
     )
 
 
