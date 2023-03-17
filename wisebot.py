@@ -109,6 +109,9 @@ def wake_up(update, context):
 
 
 def wisechoice(update, context):
+    # сделать проверку если фильмов нет == 0
+    # брать только фильмы этого юзера
+    # после вывода добавить предложение удалить фильм (кнопка под сообщением)
     chat = update.effective_chat
     text_message = '_Функция пока в разработке_'
     context.bot.send_message(
@@ -117,6 +120,10 @@ def wisechoice(update, context):
 
 
 def add_movie(update, context):
+    # проверка на ссылку
+    # отрезать тип фильма
+    # отрезать айди фильма
+    # сохранить под определенным юзером
     chat = update.effective_chat
     text_message = '_Функция пока в разработке_'
     context.bot.send_message(
@@ -125,6 +132,9 @@ def add_movie(update, context):
 
 
 def del_movie(update, context):
+    # проверить есть ли этот фильм в списке
+    # удалить фильм из базы
+    # добавить кнопку восстановления
     chat = update.effective_chat
     text_message = '_Функция пока в разработке_'
     context.bot.send_message(
