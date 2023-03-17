@@ -12,9 +12,10 @@ load_dotenv()
 
 KP_TOKEN = os.getenv('KP_TOKEN')
 KP_KEY = os.getenv('KP_KEY')
+TG_TOKEN = os.getenv('TG_TOKEN')
 URL_RANDOM = 'https://api.kinopoisk.dev/v1/movie/random'
 HEADERS = {KP_KEY: KP_TOKEN}
-updater = Updater(token=os.getenv('TG_TOKEN'))
+updater = Updater(token=TG_TOKEN)
 
 
 def get_response_random():
