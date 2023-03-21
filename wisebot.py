@@ -101,7 +101,7 @@ def wake_up(update, context):
     )
     button = ReplyKeyboardMarkup([
         ['/random', '/wisechoice'],
-        ['/add', '/del']
+        ['/add', '/del'],
     ], resize_keyboard=True)
     context.bot.send_message(
         chat_id=chat.id,
@@ -138,6 +138,14 @@ def add_movie(update, context):
     context.bot.send_message(
         chat.id, text_message, parse_mode=ParseMode.MARKDOWN
     )
+    message_from_user = context.message.text
+    context.bot.send_message(
+        chat.id, message_from_user, parse_mode=ParseMode.MARKDOWN
+    )
+
+
+def get_movie(update, context):
+    pass
 
 
 def del_movie(update, context):
