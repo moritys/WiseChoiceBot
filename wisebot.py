@@ -25,12 +25,12 @@ def get_response_random():
         'random_movie_name': response.get('name'),
         'random_movie_rating': response.get('rating').get('kp'),
         'random_movie_year': response.get('year'),
-        'random_movie_country': response.get('countries')[0].get('name'),
-        'random_movie_genre': response.get('genres')[0].get('name'),
+        'random_movie_country': ', '.join([country['name'] for country in response.get('countries')]),
+        'random_movie_genre': ', '.join([genre['name'] for genre in response.get('genres')]),
         'random_movie_description': response.get('description'),
         'random_movie_poster': response.get('poster').get('url'),
         'random_movie_url': response.get('id'),
-        'random_movie_type': response.get('type')
+        'random_movie_type': response.get('type'),
     }
     print('сделан запрос к кп')
     return random_data_fields
@@ -54,23 +54,28 @@ def get_data_random(update, context):
     if random_data["random_movie_country"] == 'Россия':
         text_message = 'Здесь был Российский фильм, его я предлагать не буду.'
         image_message = 'static/notrussian.png'
-        context.bot.send_photo(chat.id, photo=open(image_message, 'rb'))
+        context.bot.send_photo(
+            chat.id, photo=open(image_message, 'rb'), caption=text_message,
+        )
     else:
         text_message = (
-            f'*{random_data["random_movie_name"]}*. '\
-            f'Жанр: {random_data["random_movie_genre"]}. '\
-            f'Рейтинг: {random_data["random_movie_rating"]}. '\
-            f'Страна: {random_data["random_movie_country"]}. '\
-            f'Год: {random_data["random_movie_year"]}. \n'\
+            f'*{random_data["random_movie_name"]}* \n'
+            f'`Рейтинг: {random_data["random_movie_rating"]}` \n'
+            f' \n'
+            f'*Жанр:* {random_data["random_movie_genre"]} '
+            f' \n'
+            f'_({random_data["random_movie_country"]}, '
+            f'{random_data["random_movie_year"]})_ \n'
             '---- \n'\
-            f'Описание: {random_data["random_movie_description"]} \n'\
+            f'{random_data["random_movie_description"]} \n'
             f'https://kinopoisk.ru/{type_url}/{random_data["random_movie_url"]}/'
         )
         image_message = random_data['random_movie_poster']
-        context.bot.send_photo(chat.id, image_message)
-    context.bot.send_message(
-        chat.id, text_message, parse_mode=ParseMode.MARKDOWN
-    )
+        context.bot.send_photo(
+            chat.id, image_message,
+            caption=text_message,
+            parse_mode=ParseMode.MARKDOWN
+        )
 
 
 def new_random(update, context):
@@ -126,7 +131,10 @@ def add_movie(update, context):
     # отрезать айди фильма
     # сохранить под определенным юзером
     chat = update.effective_chat
-    text_message = '_Функция пока в разработке_'
+    text_message = (
+        'Чтобы добавить фильм себе в коллекцию, '
+        'отправь мне ссылку с Кинопоиска'
+    )
     context.bot.send_message(
         chat.id, text_message, parse_mode=ParseMode.MARKDOWN
     )
