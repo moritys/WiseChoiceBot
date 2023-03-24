@@ -1,6 +1,12 @@
-from telegram.ext import Updater, Filters, MessageHandler, CommandHandler, ConversationHandler
-
-from telegram import ReplyKeyboardMarkup, ParseMode
+from telegram import Update, ReplyKeyboardMarkup, ParseMode
+from telegram.ext import (
+    Updater,
+    Filters,
+    CommandHandler,
+    MessageHandler,
+    ConversationHandler,
+    CallbackContext
+)
 
 import requests
 import os
@@ -16,6 +22,7 @@ TG_TOKEN = os.getenv('TG_TOKEN')
 URL_RANDOM = 'https://api.kinopoisk.dev/v1/movie/random'
 HEADERS = {KP_KEY: KP_TOKEN}
 updater = Updater(token=TG_TOKEN)
+dispatcher = updater.dispatcher
 
 
 def get_response_random():
@@ -125,30 +132,28 @@ def wisechoice(update, context):
     )
 
 
-def get_movie(update, context):
-    user_answer = update.message.text
-    return user_answer
+def start_add(update, context) -> int:
+    update.message.reply_text('Отправь мне ссылку на фильм (для отмены напиши /quit)')
+    return ADD_MOVIE
 
 
-def add_movie(update, context):
-    # проверка на ссылку
-    # отрезать тип фильма
-    # отрезать айди фильма
-    # сохранить под определенным юзером
-    chat = update.effective_chat
-    text_message = (
-        'Отправь мне что-то'
-    )
-    context.bot.send_message(
-        chat.id, text_message, parse_mode=ParseMode.MARKDOWN
-    )
-
-    user_answer = update.message.text
-    update.message.reply_text(f'Ты отправил: {user_answer}')
+def add_movie(update: Update, context: CallbackContext) -> int:
+    url_movie = update.message.text.split('/')
+    movie_id = url_movie[-2]
+    update.message.reply_text(f'Айди фильма: {movie_id}')
+    update.message.reply_text('Добавить фильм?')
+    return CONFIRM_ADD
 
 
-def get_movie(update, context):
-    pass
+def confirm_add(update: Update, context: CallbackContext) -> int:
+    answer = update.message.text
+    if answer.lower() == 'нет':
+        update.message.reply_text('Фильм не добавлен')
+    elif answer.lower() == 'да':
+        update.message.reply_text('Фильм добавлен!')
+    else:
+        update.message.reply_text('Общайся нормально')
+    return ConversationHandler.END
 
 
 def del_movie(update, context):
@@ -174,13 +179,28 @@ def about_random(update, context):
         chat.id, text_message, parse_mode=ParseMode.MARKDOWN
     )
 
+def quit_conv(update: Update, context: CallbackContext):
+    return ConversationHandler.END
 
-updater.dispatcher.add_handler(CommandHandler('start', wake_up))
-updater.dispatcher.add_handler(CommandHandler('random', new_random))
-updater.dispatcher.add_handler(CommandHandler('wisechoice', wisechoice))
-updater.dispatcher.add_handler(CommandHandler('add', add_movie))
-updater.dispatcher.add_handler(CommandHandler('del', del_movie))
-updater.dispatcher.add_handler(CommandHandler('about_random', about_random))
+# random and base handlers
+dispatcher.add_handler(CommandHandler('start', wake_up))
+dispatcher.add_handler(CommandHandler('random', new_random))
+dispatcher.add_handler(CommandHandler('wisechoice', wisechoice))
+dispatcher.add_handler(CommandHandler('about_random', about_random))
+
+# conversation handlers
+# add movies
+ADD_MOVIE, CONFIRM_ADD = 0, 1
+dispatcher.add_handler(ConversationHandler(
+    entry_points=[CommandHandler('add', start_add)],
+    states={
+        ADD_MOVIE: [MessageHandler(Filters.text, callback=add_movie)],
+        CONFIRM_ADD: [MessageHandler(Filters.text, callback=confirm_add)]
+    },
+    fallbacks=[CommandHandler('quit', quit_conv)]
+))
+# del movies
+dispatcher.add_handler(CommandHandler('del', del_movie))
 
 
 updater.start_polling()
