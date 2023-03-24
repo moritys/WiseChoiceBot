@@ -1,4 +1,4 @@
-from telegram.ext import Updater, Filters, MessageHandler, CommandHandler
+from telegram.ext import Updater, Filters, MessageHandler, CommandHandler, ConversationHandler
 
 from telegram import ReplyKeyboardMarkup, ParseMode
 
@@ -125,6 +125,11 @@ def wisechoice(update, context):
     )
 
 
+def get_movie(update, context):
+    user_answer = update.message.text
+    return user_answer
+
+
 def add_movie(update, context):
     # проверка на ссылку
     # отрезать тип фильма
@@ -132,16 +137,14 @@ def add_movie(update, context):
     # сохранить под определенным юзером
     chat = update.effective_chat
     text_message = (
-        'Чтобы добавить фильм себе в коллекцию, '
-        'отправь мне ссылку с Кинопоиска'
+        'Отправь мне что-то'
     )
     context.bot.send_message(
         chat.id, text_message, parse_mode=ParseMode.MARKDOWN
     )
-    message_from_user = context.message.text
-    context.bot.send_message(
-        chat.id, message_from_user, parse_mode=ParseMode.MARKDOWN
-    )
+
+    user_answer = update.message.text
+    update.message.reply_text(f'Ты отправил: {user_answer}')
 
 
 def get_movie(update, context):
@@ -159,11 +162,26 @@ def del_movie(update, context):
     )
 
 
+def about_random(update, context):
+    chat = update.effective_chat
+    text_message = (
+        'Команда `/random` выбирает случайный фильмы с КП, если он: \n'
+        '▸ вышел не более 10 лет назад \n'
+        '▸ рейтинг больше `6` \n'
+        '▸ жанр и страна любые'
+    )
+    context.bot.send_message(
+        chat.id, text_message, parse_mode=ParseMode.MARKDOWN
+    )
+
+
 updater.dispatcher.add_handler(CommandHandler('start', wake_up))
 updater.dispatcher.add_handler(CommandHandler('random', new_random))
 updater.dispatcher.add_handler(CommandHandler('wisechoice', wisechoice))
 updater.dispatcher.add_handler(CommandHandler('add', add_movie))
 updater.dispatcher.add_handler(CommandHandler('del', del_movie))
+updater.dispatcher.add_handler(CommandHandler('about_random', about_random))
+
 
 updater.start_polling()
 updater.idle()
