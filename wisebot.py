@@ -13,6 +13,9 @@ import os
 
 from dotenv import load_dotenv
 
+from db_connection import add_movie_db, create_movie_table, del_movie_db, get_all_user_movies_db
+import random
+
 
 load_dotenv()
 
@@ -20,6 +23,7 @@ KP_TOKEN = os.getenv('KP_TOKEN')
 KP_KEY = os.getenv('KP_KEY')
 TG_TOKEN = os.getenv('TG_TOKEN')
 URL_RANDOM = 'https://api.kinopoisk.dev/v1/movie/random'
+URL_MOVIE_BY_ID = f'https://api.kinopoisk.dev/v1/movie/{id}'
 HEADERS = {KP_KEY: KP_TOKEN}
 updater = Updater(token=TG_TOKEN)
 dispatcher = updater.dispatcher
@@ -122,49 +126,46 @@ def wake_up(update, context):
 
 
 def wisechoice(update, context):
-    # сделать проверку если фильмов нет == 0
-    # брать только фильмы этого юзера
-    # после вывода добавить предложение удалить фильм (кнопка под сообщением)
     chat = update.effective_chat
-    text_message = '_Функция пока в разработке_'
+    all_movie = get_all_user_movies_db(chat.id)
+    movie_list = []
+    for movie in all_movie:
+        movie_list.append(movie[0])
+    random_movie_id = random.choice(movie_list)
+
+    text_message = f'Айди фильма: {random_movie_id}'
     context.bot.send_message(
         chat.id, text_message, parse_mode=ParseMode.MARKDOWN
     )
 
 
-def start_add(update, context) -> int:
-    update.message.reply_text('Отправь мне ссылку на фильм (для отмены напиши /quit)')
+def start_add(update, context):
+    update.message.reply_text('Отправь мне ссылку на фильм для добавления')
     return ADD_MOVIE
 
 
-def add_movie(update: Update, context: CallbackContext) -> int:
+def add_movie(update, context):
+    chat = update.effective_chat
     url_movie = update.message.text.split('/')
     movie_id = url_movie[-2]
-    update.message.reply_text(f'Айди фильма: {movie_id}')
-    update.message.reply_text('Добавить фильм?')
-    return CONFIRM_ADD
-
-
-def confirm_add(update: Update, context: CallbackContext) -> int:
-    answer = update.message.text
-    if answer.lower() == 'нет':
-        update.message.reply_text('Фильм не добавлен')
-    elif answer.lower() == 'да':
-        update.message.reply_text('Фильм добавлен!')
-    else:
-        update.message.reply_text('Общайся нормально')
+    create_movie_table()
+    add_movie_db(chat.id, movie_id)
+    update.message.reply_text(f'Добавлен фильм с айди {movie_id}')
     return ConversationHandler.END
 
 
+def start_del(update, context):
+    update.message.reply_text('Отправь мне ссылку на фильм удаления')
+    return DEL_MOVIE
+
+
 def del_movie(update, context):
-    # проверить есть ли этот фильм в списке
-    # удалить фильм из базы
-    # добавить кнопку восстановления
     chat = update.effective_chat
-    text_message = '_Функция пока в разработке_'
-    context.bot.send_message(
-        chat.id, text_message, parse_mode=ParseMode.MARKDOWN
-    )
+    url_movie = update.message.text.split('/')
+    movie_id = url_movie[-2]
+    del_movie_db(chat.id, movie_id)
+    update.message.reply_text(f'Удален фильм с айди {movie_id}')
+    return ConversationHandler.END
 
 
 def about_random(update, context):
@@ -179,7 +180,7 @@ def about_random(update, context):
         chat.id, text_message, parse_mode=ParseMode.MARKDOWN
     )
 
-def quit_conv(update: Update, context: CallbackContext):
+def quit_conv(update, context):
     return ConversationHandler.END
 
 # random and base handlers
@@ -190,17 +191,23 @@ dispatcher.add_handler(CommandHandler('about_random', about_random))
 
 # conversation handlers
 # add movies
-ADD_MOVIE, CONFIRM_ADD = 0, 1
+ADD_MOVIE = 0
 dispatcher.add_handler(ConversationHandler(
     entry_points=[CommandHandler('add', start_add)],
     states={
         ADD_MOVIE: [MessageHandler(Filters.text, callback=add_movie)],
-        CONFIRM_ADD: [MessageHandler(Filters.text, callback=confirm_add)]
     },
     fallbacks=[CommandHandler('quit', quit_conv)]
 ))
 # del movies
-dispatcher.add_handler(CommandHandler('del', del_movie))
+DEL_MOVIE = 1
+dispatcher.add_handler(ConversationHandler(
+    entry_points=[CommandHandler('del', start_del)],
+    states={
+        DEL_MOVIE: [MessageHandler(Filters.text, callback=del_movie)],
+    },
+    fallbacks=[CommandHandler('quit', quit_conv)]
+))
 
 
 updater.start_polling()
