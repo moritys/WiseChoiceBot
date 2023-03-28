@@ -23,28 +23,28 @@ KP_TOKEN = os.getenv('KP_TOKEN')
 KP_KEY = os.getenv('KP_KEY')
 TG_TOKEN = os.getenv('TG_TOKEN')
 URL_RANDOM = 'https://api.kinopoisk.dev/v1/movie/random'
-URL_MOVIE_BY_ID = f'https://api.kinopoisk.dev/v1/movie/{id}'
+URL_MOVIE_BY_ID = 'https://api.kinopoisk.dev/v1/movie/'
 HEADERS = {KP_KEY: KP_TOKEN}
 updater = Updater(token=TG_TOKEN)
 dispatcher = updater.dispatcher
 
 
-def get_response_random():
+def get_response(url):
     """Получение словаря данных о рандомном фильме."""
-    response = requests.get(URL_RANDOM, headers=HEADERS).json()
-    random_data_fields = {
-        'random_movie_name': response.get('name'),
-        'random_movie_rating': response.get('rating').get('kp'),
-        'random_movie_year': response.get('year'),
-        'random_movie_country': ', '.join([country['name'] for country in response.get('countries')]),
-        'random_movie_genre': ', '.join([genre['name'] for genre in response.get('genres')]),
-        'random_movie_description': response.get('description'),
-        'random_movie_poster': response.get('poster').get('url'),
-        'random_movie_url': response.get('id'),
-        'random_movie_type': response.get('type'),
+    response = requests.get(url, headers=HEADERS).json()
+    data_fields = {
+        'movie_name': response.get('name'),
+        'movie_rating': response.get('rating').get('kp'),
+        'movie_year': response.get('year'),
+        'movie_country': ', '.join([country['name'] for country in response.get('countries')]),
+        'movie_genre': ', '.join([genre['name'] for genre in response.get('genres')]),
+        'movie_description': response.get('description'),
+        'movie_poster': response.get('poster').get('url'),
+        'movie_url': response.get('id'),
+        'movie_type': response.get('type'),
     }
     print('сделан запрос к кп')
-    return random_data_fields
+    return data_fields
 
 
 def get_data_random(update, context):
@@ -52,17 +52,17 @@ def get_data_random(update, context):
     chat = update.effective_chat
     random_data = {}
 
-    for key, value in get_response_random().items():
+    for key, value in get_response(URL_RANDOM).items():
         if value == None:
             random_data[key] = '-'
         random_data[key] = value
 
-    if random_data['random_movie_type'] == 'tv-series':
+    if random_data['movie_type'] == 'tv-series':
         type_url = 'series'
     else:
         type_url = 'film'
 
-    if random_data["random_movie_country"] == 'Россия':
+    if random_data['movie_country'] == 'Россия':
         text_message = 'Здесь был Российский фильм, его я предлагать не буду.'
         image_message = 'static/notrussian.png'
         context.bot.send_photo(
@@ -70,23 +70,59 @@ def get_data_random(update, context):
         )
     else:
         text_message = (
-            f'*{random_data["random_movie_name"]}* \n'
-            f'`Рейтинг: {random_data["random_movie_rating"]}` \n'
+            f'*{random_data["movie_name"]}* \n'
+            f'`Рейтинг: {random_data["movie_rating"]}` \n'
             f' \n'
-            f'*Жанр:* {random_data["random_movie_genre"]} '
+            f'*Жанр:* {random_data["movie_genre"]} '
             f' \n'
-            f'_({random_data["random_movie_country"]}, '
-            f'{random_data["random_movie_year"]})_ \n'
+            f'_({random_data["movie_country"]}, '
+            f'{random_data["movie_year"]})_ \n'
             '---- \n'\
-            f'{random_data["random_movie_description"]} \n'
-            f'https://kinopoisk.ru/{type_url}/{random_data["random_movie_url"]}/'
+            f'{random_data["movie_description"]} \n'
+            f'https://kinopoisk.ru/{type_url}/{random_data["movie_url"]}/'
         )
-        image_message = random_data['random_movie_poster']
+        image_message = random_data['movie_poster']
         context.bot.send_photo(
             chat.id, image_message,
             caption=text_message,
             parse_mode=ParseMode.MARKDOWN
         )
+
+
+def get_data_by_id(update, context, id):
+    """Отправка отформатированного сообщения /wisechoice."""
+    chat = update.effective_chat
+    url_movie_by_id = URL_MOVIE_BY_ID + f'{id}'
+    data = {}
+
+    for key, value in get_response(url_movie_by_id).items():
+        if value == None:
+            data[key] = '-'
+        data[key] = value
+
+    if data['movie_type'] == 'tv-series':
+        type_url = 'series'
+    else:
+        type_url = 'film'
+
+    text_message = (
+        f'*{data["movie_name"]}* \n'
+        f'`Рейтинг: {data["movie_rating"]}` \n'
+        f' \n'
+        f'*Жанр:* {data["movie_genre"]} '
+        f' \n'
+        f'_({data["movie_country"]}, '
+        f'{data["movie_year"]})_ \n'
+        '---- \n'\
+        f'{data["movie_description"]} \n'
+        f'https://kinopoisk.ru/{type_url}/{data["movie_url"]}/'
+    )
+    image_message = data['movie_poster']
+    context.bot.send_photo(
+        chat.id, image_message,
+        caption=text_message,
+        parse_mode=ParseMode.MARKDOWN
+    )
 
 
 def new_random(update, context):
@@ -133,10 +169,8 @@ def wisechoice(update, context):
         movie_list.append(movie[0])
     random_movie_id = random.choice(movie_list)
 
-    text_message = f'Айди фильма: {random_movie_id}'
-    context.bot.send_message(
-        chat.id, text_message, parse_mode=ParseMode.MARKDOWN
-    )
+    context.bot.send_message(chat.id, 'Твой фильм на сегодня:')
+    get_data_by_id(update, context, random_movie_id)
 
 
 def start_add(update, context):
@@ -148,9 +182,16 @@ def add_movie(update, context):
     chat = update.effective_chat
     url_movie = update.message.text.split('/')
     movie_id = url_movie[-2]
+
     create_movie_table()
     add_movie_db(chat.id, movie_id)
-    update.message.reply_text(f'Добавлен фильм с айди {movie_id}')
+
+    url_movie_by_id = URL_MOVIE_BY_ID + f'{movie_id}'
+    print(url_movie_by_id)
+    response = requests.get(url_movie_by_id, headers=HEADERS).json()
+    movie_name = response.get('name')
+
+    update.message.reply_text(f'Добавлен фильм "{movie_name}"')
     return ConversationHandler.END
 
 
@@ -163,8 +204,14 @@ def del_movie(update, context):
     chat = update.effective_chat
     url_movie = update.message.text.split('/')
     movie_id = url_movie[-2]
+
     del_movie_db(chat.id, movie_id)
-    update.message.reply_text(f'Удален фильм с айди {movie_id}')
+
+    url_movie_by_id = URL_MOVIE_BY_ID + f'{movie_id}'
+    response = requests.get(url_movie_by_id, headers=HEADERS).json()
+    movie_name = response.get('name')
+
+    update.message.reply_text(f'Удален фильм "{movie_name}"')
     return ConversationHandler.END
 
 
