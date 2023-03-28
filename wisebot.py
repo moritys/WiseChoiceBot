@@ -1,11 +1,15 @@
-from telegram import Update, ReplyKeyboardMarkup, ParseMode
+from telegram import (
+    Update, InlineKeyboardButton, ReplyKeyboardMarkup, ParseMode,
+    InlineKeyboardMarkup
+)
 from telegram.ext import (
     Updater,
     Filters,
     CommandHandler,
     MessageHandler,
     ConversationHandler,
-    CallbackContext
+    CallbackContext,
+    CallbackQueryHandler,
 )
 
 import requests
@@ -118,10 +122,21 @@ def get_data_by_id(update, context, id):
         f'https://kinopoisk.ru/{type_url}/{data["movie_url"]}/'
     )
     image_message = data['movie_poster']
+    
+    # inline button
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                'Удалить?', callback_data=f'del_choiced {id}'
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     context.bot.send_photo(
         chat.id, image_message,
         caption=text_message,
-        parse_mode=ParseMode.MARKDOWN
+        parse_mode=ParseMode.MARKDOWN,
+        reply_markup=reply_markup
     )
 
 
@@ -167,10 +182,17 @@ def wisechoice(update, context):
     movie_list = []
     for movie in all_movie:
         movie_list.append(movie[0])
-    random_movie_id = random.choice(movie_list)
+    if movie_list == []:
+        context.bot.send_message(
+            chat.id, 'В коллекции нет фильмов ☹️'
+        )
+    else:
+        random_movie_id = random.choice(movie_list)
 
-    context.bot.send_message(chat.id, 'Твой фильм на сегодня:')
-    get_data_by_id(update, context, random_movie_id)
+        context.bot.send_message(
+            chat.id, 'Твой фильм на сегодня:'
+        )
+        get_data_by_id(update, context, random_movie_id)
 
 
 def start_add(update, context):
@@ -187,11 +209,23 @@ def add_movie(update, context):
     add_movie_db(chat.id, movie_id)
 
     url_movie_by_id = URL_MOVIE_BY_ID + f'{movie_id}'
-    print(url_movie_by_id)
+
     response = requests.get(url_movie_by_id, headers=HEADERS).json()
     movie_name = response.get('name')
 
-    update.message.reply_text(f'Добавлен фильм "{movie_name}"')
+    # inline button
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                'Отменить', callback_data=f'cancel_add {movie_id}'
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text(
+        f'Добавлен фильм "{movie_name}"',
+        reply_markup=reply_markup
+    )
     return ConversationHandler.END
 
 
@@ -211,8 +245,54 @@ def del_movie(update, context):
     response = requests.get(url_movie_by_id, headers=HEADERS).json()
     movie_name = response.get('name')
 
-    update.message.reply_text(f'Удален фильм "{movie_name}"')
+    # inline button
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                'Отменить', callback_data=f'cancel_del {movie_id}'
+            ),
+        ]
+    ]
+    reply_markup = InlineKeyboardMarkup(keyboard)
+
+    update.message.reply_text(
+        f'Удален фильм "{movie_name}"',
+        reply_markup=reply_markup
+    )
     return ConversationHandler.END
+
+
+def cancel_add(update, context, id):
+    chat = update.effective_chat
+    movie_id = id
+
+    del_movie_db(chat.id, movie_id)
+
+
+def cancel_del(update, context, id):
+    chat = update.effective_chat
+    movie_id = id
+
+    add_movie_db(chat.id, movie_id)
+
+
+def button(update, context):
+    query = update.callback_query
+    query.answer()
+
+    choice = query.data
+    answer_string = choice.split(' ')
+    func_name = answer_string[0]
+    movie_id = answer_string[-1]
+
+    if func_name == 'cancel_del':
+        cancel_del(update, context, movie_id)
+
+    if func_name == 'cancel_add':
+        cancel_add(update, context, movie_id)
+
+    if func_name == 'del_choiced':
+        cancel_add(update, context, movie_id)
 
 
 def about_random(update, context):
@@ -227,14 +307,17 @@ def about_random(update, context):
         chat.id, text_message, parse_mode=ParseMode.MARKDOWN
     )
 
+
 def quit_conv(update, context):
     return ConversationHandler.END
+
 
 # random and base handlers
 dispatcher.add_handler(CommandHandler('start', wake_up))
 dispatcher.add_handler(CommandHandler('random', new_random))
 dispatcher.add_handler(CommandHandler('wisechoice', wisechoice))
 dispatcher.add_handler(CommandHandler('about_random', about_random))
+dispatcher.add_handler(CallbackQueryHandler(button))
 
 # conversation handlers
 # add movies

@@ -1,11 +1,12 @@
-from telegram import Update, ReplyKeyboardMarkup, ParseMode
+from telegram import Update, ReplyKeyboardMarkup, ParseMode, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     Updater,
     Filters,
     CommandHandler,
     MessageHandler,
     ConversationHandler,
-    CallbackContext
+    CallbackContext,
+    CallbackQueryHandler
 )
 
 import requests
@@ -29,15 +30,45 @@ updater = Updater(token=TG_TOKEN)
 dispatcher = updater.dispatcher
 
 
-def add_id(id):
-    global URL_MOVIE_BY_ID
-    some = ''.join(str(id))
-    print(some)
-    URL_MOVIE_BY_ID += some
-    print(URL_MOVIE_BY_ID)
-    response = requests.get(URL_MOVIE_BY_ID, headers=HEADERS).json()
-    print(response)
-    movie_name = response.get('name')
+def bot(update: Update, context: CallbackContext) -> None:
 
-    print(f'Удален фильм "{movie_name}"')
-add_id(666)
+    update.message.reply_text("Beginning of inline keyboard")
+
+    keyboard = [
+        [
+            InlineKeyboardButton("Button 1", callback_data='1'),
+            InlineKeyboardButton("Button 2", callback_data='2'),
+        ]
+    ]
+
+    reply_markup = InlineKeyboardMarkup(keyboard)
+    update.message.reply_text("Replying to text", reply_markup=reply_markup)
+
+def func1():
+    print('press1')
+
+
+def func2():
+    print('press2')
+
+
+def button(update: Update, context: CallbackContext) -> None:
+    query = update.callback_query
+    query.answer()
+    
+    # This will define which button the user tapped on (from what you assigned to "callback_data". As I assigned them "1" and "2"):
+    choice = query.data
+    
+    # Now u can define what choice ("callback_data") do what like this:
+    if choice == '1':
+        func1()
+
+    if choice == '2':
+        func2()
+
+
+updater.dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, bot))
+updater.dispatcher.add_handler(CallbackQueryHandler(button))
+
+updater.start_polling()
+updater.idle()
