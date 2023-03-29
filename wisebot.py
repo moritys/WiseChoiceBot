@@ -34,7 +34,7 @@ dispatcher = updater.dispatcher
 
 
 def get_response(url):
-    """Получение словаря данных о рандомном фильме."""
+    """Получение словаря данных о фильме."""
     response = requests.get(url, headers=HEADERS).json()
     data_fields = {
         'movie_name': response.get('name'),
@@ -47,7 +47,7 @@ def get_response(url):
         'movie_url': response.get('id'),
         'movie_type': response.get('type'),
     }
-    print('сделан запрос к кп')
+
     return data_fields
 
 
@@ -86,11 +86,29 @@ def get_data_random(update, context):
             f'https://kinopoisk.ru/{type_url}/{random_data["movie_url"]}/'
         )
         image_message = random_data['movie_poster']
-        context.bot.send_photo(
-            chat.id, image_message,
-            caption=text_message,
-            parse_mode=ParseMode.MARKDOWN
-        )
+
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    '💿 Добавить в коллекцию', callback_data=f'add_random {random_data["movie_url"]}'
+                ),
+            ]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
+
+        if len(text_message) > 1024:
+            context.bot.send_photo(chat.id, image_message)
+            context.bot.send_message(
+                chat.id, text_message,
+                reply_markup=reply_markup
+            )
+        else:
+            context.bot.send_photo(
+                chat.id, image_message,
+                caption=text_message,
+                parse_mode=ParseMode.MARKDOWN,
+                reply_markup=reply_markup
+            )
 
 
 def get_data_by_id(update, context, id):
@@ -122,28 +140,33 @@ def get_data_by_id(update, context, id):
         f'https://kinopoisk.ru/{type_url}/{data["movie_url"]}/'
     )
     image_message = data['movie_poster']
-    
+
     # inline button
     keyboard = [
         [
             InlineKeyboardButton(
-                'Удалить?', callback_data=f'del_choiced {id}'
+                '🛋️ Буду смотреть это, удаляй из списка', callback_data=f'del_choiced {id}'
             ),
         ]
     ]
     reply_markup = InlineKeyboardMarkup(keyboard)
-    context.bot.send_photo(
-        chat.id, image_message,
-        caption=text_message,
-        parse_mode=ParseMode.MARKDOWN,
-        reply_markup=reply_markup
-    )
+
+    if len(text_message) > 1024:
+        context.bot.send_photo(chat.id, image_message)
+        context.bot.send_message(chat.id, text_message, reply_markup=reply_markup)
+    else:
+        context.bot.send_photo(
+            chat.id, image_message,
+            caption=text_message,
+            parse_mode=ParseMode.MARKDOWN,
+            reply_markup=reply_markup
+        )
 
 
 def new_random(update, context):
     """Обработка команды /random."""
     chat = update.effective_chat
-    
+
     # первый рандомный фильм
     get_data_random(update, context)
     context.bot.send_message(chat.id, 'Либо посмотри вот это:')
@@ -196,69 +219,80 @@ def wisechoice(update, context):
 
 
 def start_add(update, context):
-    update.message.reply_text('Отправь мне ссылку на фильм для добавления')
+    update.message.reply_text('Отправь мне ссылку на фильм с Кинопоиска:')
     return ADD_MOVIE
 
 
 def add_movie(update, context):
     chat = update.effective_chat
-    url_movie = update.message.text.split('/')
-    movie_id = url_movie[-2]
+    
+    try:
+        url_movie = update.message.text.split('/')
+        movie_id = url_movie[-2]
 
-    create_movie_table()
-    add_movie_db(chat.id, movie_id)
+        create_movie_table()
+        add_movie_db(chat.id, movie_id)
 
-    url_movie_by_id = URL_MOVIE_BY_ID + f'{movie_id}'
+        url_movie_by_id = URL_MOVIE_BY_ID + f'{movie_id}'
 
-    response = requests.get(url_movie_by_id, headers=HEADERS).json()
-    movie_name = response.get('name')
+        response = requests.get(url_movie_by_id, headers=HEADERS).json()
+        movie_name = response.get('name')
 
-    # inline button
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                'Отменить', callback_data=f'cancel_add {movie_id}'
-            ),
+        # inline button
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    '✖️ Отменить добавление', callback_data=f'cancel_add {movie_id}'
+                ),
+            ]
         ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
-    update.message.reply_text(
-        f'Добавлен фильм "{movie_name}"',
-        reply_markup=reply_markup
-    )
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        update.message.reply_text(
+            f'Добавлен фильм "{movie_name}"',
+            reply_markup=reply_markup
+        )
+    except Exception:
+        update.message.reply_text(
+            f'Не могу найти фильм, возможно ты отправил что-то не то'
+        )
     return ConversationHandler.END
 
 
 def start_del(update, context):
-    update.message.reply_text('Отправь мне ссылку на фильм удаления')
+    update.message.reply_text('Отправь мне ссылку на фильм удаления:')
     return DEL_MOVIE
 
 
 def del_movie(update, context):
     chat = update.effective_chat
-    url_movie = update.message.text.split('/')
-    movie_id = url_movie[-2]
+    try:
+        url_movie = update.message.text.split('/')
+        movie_id = url_movie[-2]
 
-    del_movie_db(chat.id, movie_id)
+        del_movie_db(chat.id, movie_id)
 
-    url_movie_by_id = URL_MOVIE_BY_ID + f'{movie_id}'
-    response = requests.get(url_movie_by_id, headers=HEADERS).json()
-    movie_name = response.get('name')
+        url_movie_by_id = URL_MOVIE_BY_ID + f'{movie_id}'
+        response = requests.get(url_movie_by_id, headers=HEADERS).json()
+        movie_name = response.get('name')
 
-    # inline button
-    keyboard = [
-        [
-            InlineKeyboardButton(
-                'Отменить', callback_data=f'cancel_del {movie_id}'
-            ),
+        # inline button
+        keyboard = [
+            [
+                InlineKeyboardButton(
+                    '✖️ Отменить удаление', callback_data=f'cancel_del {movie_id}'
+                ),
+            ]
         ]
-    ]
-    reply_markup = InlineKeyboardMarkup(keyboard)
+        reply_markup = InlineKeyboardMarkup(keyboard)
 
-    update.message.reply_text(
-        f'Удален фильм "{movie_name}"',
-        reply_markup=reply_markup
-    )
+        update.message.reply_text(
+            f'Удален фильм "{movie_name}"',
+            reply_markup=reply_markup
+        )
+    except Exception:
+        update.message.reply_text(
+            f'Не могу найти фильм, возможно ты отправил что-то не то'
+        )
     return ConversationHandler.END
 
 
@@ -285,13 +319,10 @@ def button(update, context):
     func_name = answer_string[0]
     movie_id = answer_string[-1]
 
-    if func_name == 'cancel_del':
+    if (func_name == 'cancel_del') or (func_name == 'add_random'):
         cancel_del(update, context, movie_id)
 
-    if func_name == 'cancel_add':
-        cancel_add(update, context, movie_id)
-
-    if func_name == 'del_choiced':
+    if (func_name == 'cancel_add') or (func_name == 'del_choiced'):
         cancel_add(update, context, movie_id)
 
 
