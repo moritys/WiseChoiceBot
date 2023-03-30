@@ -321,9 +321,19 @@ def button(update, context):
 
     if (func_name == 'cancel_del') or (func_name == 'add_random'):
         cancel_del(update, context, movie_id)
+        context.bot.edit_message_reply_markup(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            reply_markup=None
+        )
 
     if (func_name == 'cancel_add') or (func_name == 'del_choiced'):
         cancel_add(update, context, movie_id)
+        context.bot.edit_message_reply_markup(
+            chat_id=query.message.chat_id,
+            message_id=query.message.message_id,
+            reply_markup=None
+        )
 
 
 def about_random(update, context):
