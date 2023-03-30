@@ -6,12 +6,12 @@ def create_movie_table():
     cur = con.cursor()
 
     cur.execute('''
-    CREATE TABLE IF NOT EXISTS movies(
-        id INTEGER PRIMARY KEY,
-        user_id INTEGER,
-        movie_id INTEGER,
-        UNIQUE(user_id, movie_id) ON CONFLICT REPLACE
-    );
+        CREATE TABLE IF NOT EXISTS movies(
+            id INTEGER PRIMARY KEY,
+            user_id INTEGER,
+            movie_id INTEGER,
+            UNIQUE(user_id, movie_id) ON CONFLICT REPLACE
+        );
     ''')
 
     con.commit()
@@ -49,9 +49,9 @@ def get_all_user_movies_db(user):
     cur = con.cursor()
 
     cur.execute(f'''
-    SELECT movie_id
-    FROM movies
-    WHERE user_id = {user};
+        SELECT movie_id
+        FROM movies
+        WHERE user_id = {user};
     ''')
     all_movies = cur.fetchall()
 

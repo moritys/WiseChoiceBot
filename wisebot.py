@@ -179,7 +179,7 @@ def wake_up(update, context):
     name = update.message.chat.first_name
     text = (
         'Для работы со мной используй меню или команды: \n'
-        '`/random` - получить два случайных фильма из КП \n'
+        '`/random` - получить два случайных фильма с Кинопоиска \n'
         '`/wisechoice` - выбрать случайный фильм из своего списка \n'
         '`/add` - добавить фильм в коллекцию (ссылка должна быть с КП) \n'
         '`/del` - удалить фильм из коллекции (ссылка должна быть с КП) \n'
@@ -259,7 +259,7 @@ def add_movie(update, context):
 
 
 def start_del(update, context):
-    update.message.reply_text('Отправь мне ссылку на фильм удаления:')
+    update.message.reply_text('Отправь мне ссылку на фильм для удаления:')
     return DEL_MOVIE
 
 
