@@ -17,7 +17,9 @@ import os
 
 from dotenv import load_dotenv
 
-from db_connection import add_movie_db, create_movie_table, del_movie_db, get_all_user_movies_db
+from db_connection import (
+    add_movie_db, create_movie_table, del_movie_db, get_all_user_movies_db
+)
 import random
 
 
@@ -90,7 +92,8 @@ def get_data_random(update, context):
         keyboard = [
             [
                 InlineKeyboardButton(
-                    '💿 Добавить в коллекцию', callback_data=f'add_random {random_data["movie_url"]}'
+                    '💿 Добавить в коллекцию',
+                    callback_data=f'add_random {random_data["movie_url"]}'
                 ),
             ]
         ]
@@ -145,7 +148,8 @@ def get_data_by_id(update, context, id):
     keyboard = [
         [
             InlineKeyboardButton(
-                '🛋️ Буду смотреть это, удаляй из списка', callback_data=f'del_choiced {id}'
+                '🛋️ Буду смотреть это, удаляй из списка',
+                callback_data=f'del_choiced {id}'
             ),
         ]
     ]
@@ -153,7 +157,10 @@ def get_data_by_id(update, context, id):
 
     if len(text_message) > 1024:
         context.bot.send_photo(chat.id, image_message)
-        context.bot.send_message(chat.id, text_message, reply_markup=reply_markup)
+        context.bot.send_message(
+            chat.id, text_message,
+            reply_markup=reply_markup
+        )
     else:
         context.bot.send_photo(
             chat.id, image_message,
@@ -242,7 +249,8 @@ def add_movie(update, context):
         keyboard = [
             [
                 InlineKeyboardButton(
-                    '✖️ Отменить добавление', callback_data=f'cancel_add {movie_id}'
+                    '✖️ Отменить добавление',
+                    callback_data=f'cancel_add {movie_id}'
                 ),
             ]
         ]
@@ -279,7 +287,8 @@ def del_movie(update, context):
         keyboard = [
             [
                 InlineKeyboardButton(
-                    '✖️ Отменить удаление', callback_data=f'cancel_del {movie_id}'
+                    '✖️ Отменить удаление',
+                    callback_data=f'cancel_del {movie_id}'
                 ),
             ]
         ]
