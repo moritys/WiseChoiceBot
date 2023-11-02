@@ -1,7 +1,5 @@
 # WiseChoiceBot 🛋
 
-ru | en
-
 Telegram bot for choosing a movie for the evening. It will help you not to worry about decisions and have a good time with treats/friend/beloved/cat/belovedcat.
 
 <div align="center">
