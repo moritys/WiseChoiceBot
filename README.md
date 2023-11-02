@@ -27,6 +27,7 @@ Telegram bot for choosing a movie for the evening. It will help you not to worry
 - Check the functionality of the API. Its creator is constantly making improvements and updates, so it is possible that some of the functionality has become unavailable
 - 🐳
 - Deploy the bot to a real server so that you can use it at any time without running it locally
+- Can explain Bogosort 🌾
 
 <div align="center">
   <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExY3gzbHVqcHF5ODFxOW53YWF3ZndtYWltYzNwa25sMTZtM2lkcjRydCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/SYKjUPtI1gjSTqSf38/giphy.gif">
