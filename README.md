@@ -21,7 +21,7 @@ Telegram bot for choosing a movie for the evening. It will help you not to worry
 
 ### What cannot:
 - **Make coffee**
-- **Explane Bogosort**
+- **Explain Bogosort**
 - **Watches a movie with you** <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTA3ZnlrMWR6dnk3M3F4N2lqbGdqODhqaGtzNG1icW9nNnN1ZXA2dCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/VfyC5j7sR4cso/giphy.gif">
 
 ### To improve:
